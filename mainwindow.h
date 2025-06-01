@@ -28,6 +28,7 @@ private:
     Ui::MainWindow *ui;
     QVideoWidget *mVideo;
     QCamera *mCamera = nullptr;
+    bool mCameraLoaded = false;
 
     QList<QCameraInfo> mCameras;
 };

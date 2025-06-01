@@ -2,6 +2,7 @@
 #include "./ui_mainwindow.h"
 
 #include <QCameraViewfinderSettings>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -25,6 +26,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_listWidget_currentRowChanged(int row)
 {
+    mCameraLoaded = false;
     if (mCamera)
     {
         mCamera->stop();
@@ -38,7 +40,6 @@ void MainWindow::on_listWidget_currentRowChanged(int row)
 
     const auto cam = mCameras.at(row);
 
-
     mCamera = new QCamera(cam, this);
     mCamera->setViewfinder(mVideo);
     mCamera->setCaptureMode(QCamera::CaptureViewfinder);
@@ -46,14 +47,15 @@ void MainWindow::on_listWidget_currentRowChanged(int row)
     mCamera->imageProcessing()->setWhiteBalanceMode(QCameraImageProcessing::WhiteBalanceAuto);
 
     connect(mCamera, &QCamera::statusChanged, this, [this](QCamera::Status status){
-        if (status == QCamera::Status::LoadedStatus)
+        if (status == QCamera::Status::LoadedStatus && !mCameraLoaded)
         {
+            mCameraLoaded = true;
             const auto resolutions = mCamera->supportedViewfinderResolutions();
             ui->resolutions->clear();
 
             if (resolutions.isEmpty())
             {
-                mCamera->start();
+                on_resolutions_activated(-1);
                 return;
             }
 
@@ -86,6 +88,6 @@ void MainWindow::on_resolutions_activated(int index)
         settings.setResolution(size.toSize());
     }
     mCamera->setViewfinderSettings(settings);
-    mCamera->start();
+    QTimer::singleShot(1000, mCamera, &QCamera::start);
 }
 
